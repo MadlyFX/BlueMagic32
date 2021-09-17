@@ -39,6 +39,8 @@ public:
   BlueMagicCameraController *connect();
   BlueMagicCameraController *connect(uint8_t index);
 
+  
+
   void disconnect();
 
   void clearPairing();
@@ -49,6 +51,8 @@ private:
   String _name;
   Preferences *_pref;
   bool _init = false;
+
+  bool scanned;
 
   bool _authenticated;
   int _connected;

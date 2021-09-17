@@ -34,6 +34,14 @@ private:
     int16_t _whiteBalance = 0;
 
     bool _changed = false;
+	
+	bool _wbchanged = false;
+	bool _tintchanged = false;
+	bool _isochanged = false;
+	bool _shutterchanged = false;
+	bool _zoomchanged = false;
+	bool _focuschanged = false;
+	bool _aperturechanged = false;
 
     uint8_t *_settingsData = nullptr;
     uint8_t *_timecodeData = nullptr;
@@ -48,6 +56,20 @@ public:
 
     void setChanged(bool changed);
     bool changed();
+	    void setwbChanged(bool changed);
+    bool wbchanged();
+	    void settintChanged(bool changed);
+    bool tintchanged();
+	    void setisoChanged(bool changed);
+    bool isochanged();
+	    void setshutterChanged(bool changed);
+    bool shutterchanged();
+	    void setzoomChanged(bool changed);
+    bool zoomchanged();
+	    void setfocusChanged(bool changed);
+    bool focuschanged();
+		    void setapertureChanged(bool changed);
+    bool aperturechanged();
 
     void settingsNotify(bool changed, uint8_t *data);
     bool settingsChanged();

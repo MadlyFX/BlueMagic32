@@ -39,6 +39,13 @@ public:
   BlueMagicCameraController();
 
   bool changed();
+  	bool wbchanged();
+	bool tintchanged();
+	bool isochanged();
+	bool shutterchanged();
+	bool zoomchanged();
+	bool focuschanged();
+	bool aperturechanged();
 
   bool settingsChanged();
   uint8_t *settingsData();

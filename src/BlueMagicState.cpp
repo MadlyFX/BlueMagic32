@@ -21,10 +21,94 @@ void BlueMagicState::setChanged(bool changed)
     _changed = changed;
 }
 
+void BlueMagicState::setwbChanged(bool changed)
+{
+    _wbchanged = changed;
+}
+
+void BlueMagicState::settintChanged(bool changed)
+{
+    _tintchanged = changed;
+}
+
+void BlueMagicState::setisoChanged(bool changed)
+{
+    _isochanged = changed;
+}
+
+void BlueMagicState::setshutterChanged(bool changed)
+{
+    _shutterchanged = changed;
+}
+
+void BlueMagicState::setzoomChanged(bool changed)
+{
+    _zoomchanged = changed;
+}
+
+void BlueMagicState::setfocusChanged(bool changed)
+{
+    _focuschanged = changed;
+}
+
+void BlueMagicState::setapertureChanged(bool changed)
+{
+    _aperturechanged = changed;
+}
+
 bool BlueMagicState::changed()
 {
     bool changed = _changed;
     _changed = false;
+    return changed;
+}
+
+bool BlueMagicState::wbchanged()
+{
+    bool changed = _wbchanged;
+    _wbchanged = false;
+    return changed;
+}
+
+bool BlueMagicState::tintchanged()
+{
+    bool changed = _tintchanged;
+    _tintchanged = false;
+    return changed;
+}
+
+bool BlueMagicState::isochanged()
+{
+    bool changed = _isochanged;
+    _isochanged = false;
+    return changed;
+}
+
+bool BlueMagicState::shutterchanged()
+{
+    bool changed = _shutterchanged;
+    _shutterchanged = false;
+    return changed;
+}
+
+bool BlueMagicState::zoomchanged()
+{
+    bool changed = _zoomchanged;
+    _zoomchanged = false;
+    return changed;
+}
+
+bool BlueMagicState::focuschanged()
+{
+    bool changed = _focuschanged;
+    _focuschanged = false;
+    return changed;
+}
+
+bool BlueMagicState::aperturechanged()
+{
+    bool changed = _aperturechanged;
+    _aperturechanged = false;
     return changed;
 }
 

@@ -17,6 +17,39 @@ bool BlueMagicCameraController::changed()
   return _state->changed();
 }
 
+bool BlueMagicCameraController::wbchanged()
+{
+  return _state->wbchanged();
+}
+
+bool BlueMagicCameraController::tintchanged()
+{
+  return _state->tintchanged();
+}
+
+bool BlueMagicCameraController::isochanged()
+{
+  return _state->isochanged();
+}
+bool BlueMagicCameraController::shutterchanged()
+{
+  return _state->shutterchanged();
+}
+bool BlueMagicCameraController::zoomchanged()
+{
+  return _state->zoomchanged();
+}
+bool BlueMagicCameraController::focuschanged()
+{
+  return _state->focuschanged();
+}
+bool BlueMagicCameraController::aperturechanged()
+{
+  return _state->aperturechanged();
+}
+
+
+
 bool BlueMagicCameraController::settingsChanged()
 {
   return _state->settingsChanged();
@@ -213,7 +246,7 @@ void BlueMagicCameraController::zoom(float zoom)
 
 float BlueMagicCameraController::getZoom()
 {
-  return 0.0;
+  return _state->getZoom();
 }
 
 void BlueMagicCameraController::aperture(float value)

@@ -87,6 +87,7 @@ static void controlNotify(BLERemoteCharacteristic *pBLERemoteCharacteristic, uin
     blu->setFrameWidth(width);
     blu->setFrameHeight(height);
     blu->setFormatFlags(flags);
+	
   }
 
   // white balance
@@ -103,6 +104,21 @@ static void controlNotify(BLERemoteCharacteristic *pBLERemoteCharacteristic, uin
 
     blu->setWhiteBalance(whiteBalance);
     blu->setTint(tint);
+	
+		blu->setwbChanged(true);
+		blu->settintChanged(true);
+  }
+
+    // Focus
+  if (pData[0] == 255 && pData[4] == 0 && pData[5] == 0)
+  {
+    changed = true;
+    int16_t zL = pData[8];
+    int16_t zH = pData[9] << 8;
+    int16_t focus = zL + zH;
+    blu->setFocus(focus);
+	
+		blu->setfocusChanged(true);
   }
 
   // zoom
@@ -113,6 +129,8 @@ static void controlNotify(BLERemoteCharacteristic *pBLERemoteCharacteristic, uin
     int16_t zH = pData[9] << 8;
     int16_t zoom = zL + zH;
     blu->setZoom(zoom);
+	
+		blu->setzoomChanged(true);
   }
 
   // aperture
@@ -123,6 +141,8 @@ static void controlNotify(BLERemoteCharacteristic *pBLERemoteCharacteristic, uin
     uint16_t high = pData[9] << 8;
     float aperture = sqrt(pow(2, (float(low + high) / 2048.0)));
     blu->setAperture(aperture);
+	
+		blu->setapertureChanged(true);
   }
 
   // iso
@@ -133,16 +153,20 @@ static void controlNotify(BLERemoteCharacteristic *pBLERemoteCharacteristic, uin
     uint16_t high = pData[9] << 8;
     int32_t iso = low + high;
     blu->setIso(iso);
+	
+		blu->setisoChanged(true);
   }
 
   // shutter
-  if (pData[0] == 255 && pData[4] == 1 && pData[5] == 11)
+  if (pData[0] == 255 && pData[4] == 1 && pData[5] == 12)
   {
     changed = true;
     uint16_t low = pData[8];
     uint16_t high = pData[9] << 8;
     int32_t shutter = low + high;
     blu->setShutter(shutter);
+	
+		blu->setshutterChanged(true);
   }
 
   blu->setChanged(changed);
@@ -153,23 +177,24 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
 
   void onResult(BLEAdvertisedDevice advertisedDevice)
   {
-    Serial.println("BLE Advertised Device found: ");
-
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.getServiceUUID().equals(ServiceId))
     {
-      advertisedDevice.getScan()->stop();
+     // Serial.println(advertisedDevice.getAddress().c_str());//god help us all
+     // advertisedDevice.getScan()->stop();
     }
   }
 };
 
 class MySecurity : public BLESecurityCallbacks
 {
-  uint32_t onPassKeyRequest()
+  uint32_t onPassKeyRequest()//This sucks that it's not two seperate functions, but it is what it is
   {
     // code snippet from jeppo7745 https://www.instructables.com/id/Magic-Button-4k-the-20USD-BMPCC4k-Remote/
-    Serial.println("---> PLEASE ENTER 6 DIGIT PIN (end with ENTER) : ");
+ 
+    Serial.println("bm,pinrequest");
+       
     int pinCode = 0;
-    char ch;
+   char ch;
     do
     {
       while (!Serial.available())
@@ -180,9 +205,10 @@ class MySecurity : public BLESecurityCallbacks
       if (ch >= '0' && ch <= '9')
       {
         pinCode = pinCode * 10 + (ch - '0');
-        Serial.print(ch);
+        //Serial.print(ch);
       }
     } while ((ch != '\n'));
+    
     return pinCode;
   }
 
@@ -248,6 +274,10 @@ void BlueMagicCameraConnection::begin(String name)
   if (addr.length() > 0)
   {
     setCameraAddress(BLEAddress(addr.c_str()));
+    Serial.print("bm,begin,1,");
+    Serial.println(addr);
+  } else{
+    Serial.println("bm,begin,0");
   }
 
   _pref->end();
@@ -278,7 +308,20 @@ bool BlueMagicCameraConnection::scan(bool active, int duration)
     _bleScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     _bleScan->setActiveScan(active);
     _bleScan->start(duration);
+    
+    for(int i = 0; i < _bleScan->getResults().getCount(); i++){
+          if (_bleScan->getResults().getDevice(i).haveServiceUUID() && _bleScan->getResults().getDevice(i).getServiceUUID().equals(ServiceId))
+    {
+        Serial.print("bm,founddevice,");
+        Serial.print(i);
+        Serial.print(",");
+        Serial.println(_bleScan->getResults().getDevice(i).getAddress().toString().c_str());
+    }
+      }
+      
   }
+  Serial.println("bm,scanned");
+  scanned = true;
   return true;
 }
 
@@ -301,8 +344,8 @@ bool BlueMagicCameraConnection::connectToServer(BLEAddress address)
   BLERemoteService *pRemoteService = _client->getService(BmdCameraService);
   if (pRemoteService == nullptr)
   {
-    Serial.print("Failed to find our service UUID: ");
-    Serial.println(BmdCameraService.toString().c_str());
+    //Serial.print("Failed to find our service UUID: ");
+   // Serial.println(BmdCameraService.toString().c_str());
     return false;
   }
 
@@ -382,6 +425,7 @@ BLEAddress *BlueMagicCameraConnection::getCameraAddress()
   return _cameraAddress;
 }
 
+
 BlueMagicCameraController *BlueMagicCameraConnection::connect()
 {
   return connect(0);
@@ -391,12 +435,12 @@ BlueMagicCameraController *BlueMagicCameraConnection::connect(uint8_t index)
 {
   if (_cameraControl != nullptr)
   {
+    Serial.println("No _cameraControl");
     return _cameraControl;
   }
 
   bool ok;
-  bool scanned = scan(false, 5);
-
+ // bool scanned = scan(false, 5);
   BLEAddress address = BLEAddress("FF:FF:FF:FF:FF");
 
   if (scanned)
@@ -404,15 +448,20 @@ BlueMagicCameraController *BlueMagicCameraConnection::connect(uint8_t index)
     int count = _bleScan->getResults().getCount();
     if (count > 0)
     {
-      int foundIndex = count - 1;
-      address = _bleScan->getResults().getDevice(foundIndex).getAddress();
+      //int foundIndex = count - 1;
+      address = _bleScan->getResults().getDevice(index).getAddress();
       ok = connectToServer(address);
     }
   }
   else
   {
+    Serial.println("Not Scanned");
     address = *getCameraAddress();
+    Serial.print("getCameraAddr ");
+    Serial.println(address.toString().c_str());
     ok = connectToServer(address);
+    Serial.print("Connect to ");
+      Serial.println(address.toString().c_str());
   }
 
   if (ok)
@@ -420,6 +469,7 @@ BlueMagicCameraController *BlueMagicCameraConnection::connect(uint8_t index)
     setAuthentication(true);
     _pref->begin(_name.c_str(), false);
     _pref->putString("cameraAddress", address.toString().c_str());
+    Serial.println(_pref->getString("cameraAddress", ""));
     _pref->putBool("authenticated", getAuthentication());
     _pref->end();
     setCameraAddress(address);
@@ -455,7 +505,7 @@ void BlueMagicCameraConnection::clearPairing()
   for (int i = 0; i < dev_num; i++)
   {
     BLEAddress baddr = BLEAddress(dev_list[i].bd_addr);
-    Serial.println(baddr.toString().c_str());
+   // Serial.println(baddr.toString().c_str());
     esp_ble_remove_bond_device(dev_list[i].bd_addr);
   }
 
