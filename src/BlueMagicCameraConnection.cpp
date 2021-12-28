@@ -175,12 +175,13 @@ static void controlNotify(BLERemoteCharacteristic *pBLERemoteCharacteristic, uin
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
 {
 
-  void onResult(BLEAdvertisedDevice advertisedDevice)
+void onResult(BLEAdvertisedDevice advertisedDevice)
   {
+   // Serial.println("BLE Advertised Device found: ");
+
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.getServiceUUID().equals(ServiceId))
     {
-     // Serial.println(advertisedDevice.getAddress().c_str());//god help us all
-     // advertisedDevice.getScan()->stop();
+      advertisedDevice.getScan()->stop();
     }
   }
 };
@@ -268,16 +269,12 @@ void BlueMagicCameraConnection::begin(String name)
   }
 
   _pref->begin(_name.c_str(), false);
-
+	_pref->clear();
   setAuthentication(_pref->getBool("authenticated", false));
   String addr = _pref->getString("cameraAddress", "");
-  if (addr.length() > 0)
+ if (addr.length() > 0)
   {
     setCameraAddress(BLEAddress(addr.c_str()));
-    Serial.print("bm,begin,1,");
-    Serial.println(addr);
-  } else{
-    Serial.println("bm,begin,0");
   }
 
   _pref->end();
@@ -308,19 +305,7 @@ bool BlueMagicCameraConnection::scan(bool active, int duration)
     _bleScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     _bleScan->setActiveScan(active);
     _bleScan->start(duration);
-    
-    for(int i = 0; i < _bleScan->getResults().getCount(); i++){
-          if (_bleScan->getResults().getDevice(i).haveServiceUUID() && _bleScan->getResults().getDevice(i).getServiceUUID().equals(ServiceId))
-    {
-        Serial.print("bm,founddevice,");
-        Serial.print(i);
-        Serial.print(",");
-        Serial.println(_bleScan->getResults().getDevice(i).getAddress().toString().c_str());
-    }
-      }
-      
   }
-  Serial.println("bm,scanned");
   scanned = true;
   return true;
 }
@@ -344,8 +329,8 @@ bool BlueMagicCameraConnection::connectToServer(BLEAddress address)
   BLERemoteService *pRemoteService = _client->getService(BmdCameraService);
   if (pRemoteService == nullptr)
   {
-    //Serial.print("Failed to find our service UUID: ");
-   // Serial.println(BmdCameraService.toString().c_str());
+  //  Serial.print("Failed to find our service UUID: ");
+    Serial.println(BmdCameraService.toString().c_str());
     return false;
   }
 
@@ -432,15 +417,16 @@ BlueMagicCameraController *BlueMagicCameraConnection::connect()
 }
 
 BlueMagicCameraController *BlueMagicCameraConnection::connect(uint8_t index)
+
 {
   if (_cameraControl != nullptr)
   {
-    Serial.println("No _cameraControl");
     return _cameraControl;
   }
 
   bool ok;
- // bool scanned = scan(false, 5);
+  bool scanned = scan(true, 5);
+
   BLEAddress address = BLEAddress("FF:FF:FF:FF:FF");
 
   if (scanned)
@@ -448,20 +434,15 @@ BlueMagicCameraController *BlueMagicCameraConnection::connect(uint8_t index)
     int count = _bleScan->getResults().getCount();
     if (count > 0)
     {
-      //int foundIndex = count - 1;
-      address = _bleScan->getResults().getDevice(index).getAddress();
+      int foundIndex = count - 1;
+      address = _bleScan->getResults().getDevice(foundIndex).getAddress();
       ok = connectToServer(address);
     }
   }
   else
   {
-    Serial.println("Not Scanned");
     address = *getCameraAddress();
-    Serial.print("getCameraAddr ");
-    Serial.println(address.toString().c_str());
     ok = connectToServer(address);
-    Serial.print("Connect to ");
-      Serial.println(address.toString().c_str());
   }
 
   if (ok)
@@ -469,7 +450,6 @@ BlueMagicCameraController *BlueMagicCameraConnection::connect(uint8_t index)
     setAuthentication(true);
     _pref->begin(_name.c_str(), false);
     _pref->putString("cameraAddress", address.toString().c_str());
-    Serial.println(_pref->getString("cameraAddress", ""));
     _pref->putBool("authenticated", getAuthentication());
     _pref->end();
     setCameraAddress(address);
@@ -489,6 +469,13 @@ void BlueMagicCameraConnection::disconnect()
 
 void BlueMagicCameraConnection::clearPairing()
 {
+	
+	_pref->begin(_name.c_str(), false);
+  //_pref->putString("cameraAddress", "");
+  //_pref->putBool("authenticated", getAuthentication());
+  _pref->clear();
+  _pref->end();
+  
   if (connected() != CAMERA_DISCONNECTED)
   {
     disconnect();
@@ -512,8 +499,5 @@ void BlueMagicCameraConnection::clearPairing()
   free(dev_list);
   setAuthentication(false);
   // setCameraAddress(nullptr);
-  _pref->begin(_name.c_str(), false);
-  _pref->putString("cameraAddress", "");
-  _pref->putBool("authenticated", getAuthentication());
-  _pref->end();
+  
 }
